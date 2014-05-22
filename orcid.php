@@ -116,7 +116,12 @@ function the_content_orcid( $content ){
 		$orcid
 	);
 
-	return $html . $content;
+	$html_position = apply_filters( 'orcid_the_content_html_position', 'top' );
+	if ( 'top' == $html_position ) {
+		return $html . $content;
+	} else {
+		return $content . $html;
+	}
 }
 
 /* returns the authors orcid for use in custom templates simply use <?php echo get_the_author_orcid(); ?> in a content tempate to display the authors ORCID */
