@@ -8,7 +8,7 @@ Author: Roy Boverhof
 Author URI: http://www.elsevier.com
 */
 
-/*  Copyright 2014 Roy Boverhof  (email: r.boverhof@elsevier.com)
+/*  Copyright 2014 Roy Boverhof (email: r.boverhof@elsevier.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License, version 2, as 
@@ -64,7 +64,7 @@ add_filter('comment_text','comment_orcid_text');
 function comment_orcid_text($text){
 	$orcid = get_the_comment_orcid();
 	if ($orcid) {
-		$text = '<div class="wp_orcid_comment"><a href="http://orcid.org/'.$orcid.'" target="_blank">'.$orcid.'</a></div>'.$text;
+		$text = '<div class="wp_orcid_comment"><a href="http://orcid.org/'.$orcid.'" target="_blank" rel="author">'.$orcid.'</a></div>'.$text;
 	}
 	
 	return $text;
@@ -103,7 +103,7 @@ function admin_user_profile_orcid($user_id){
 add_filter('the_content', 'the_content_orcid');
 function the_content_orcid($content){
 	$orcid = get_the_author_orcid();
-    echo '<div class="wp_orcid_post"><a href="http://orcid.org/'.$orcid.'" target="_blank">'.$orcid.'</a></div>'.$content;   
+    echo '<div class="wp_orcid_post"><a href="http://orcid.org/'.$orcid.'" target="_blank" rel="author">'.$orcid.'</a></div>'.$content;   
 }
 
 /* returns the authors orcid for use in custom templates simply use <?php echo get_the_author_orcid(); ?> in a content tempate to display the authors ORCID */
