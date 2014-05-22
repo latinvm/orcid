@@ -24,19 +24,6 @@ Author URI: http://www.elsevier.com
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-/*  TODO:
-	implement regular expression JavaScript to validate ORCIDs
-	var orcidRegex = new RegExp("(\\d{4}-){3,}\\d{3}[\\dX]");
-	var regexResult = orcidRegex.exec(inputString);
-	if(regexResult){
-		// Got an orcid
-	}
-	
-	add a setting page?
-	use OAuth to allow social login via orcid.org
-	make sure logged in users comments display orcid with comments.
-*/
-
 add_action( 'wp_enqueue_scripts', 'add_orcid_stylesheet' );
 function add_orcid_stylesheet() {
 	wp_enqueue_style( 'prefix-style', plugins_url('orcid.css', __FILE__) );
