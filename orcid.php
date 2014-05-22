@@ -71,14 +71,25 @@ function comment_orcid_text( $text ) {
 	}
 
 	if ( $orcid ) {
+		// Allow HTML override
 		$html = sprintf(
 			apply_filters( 'orcid_comment_text_html', '<div class="wp_orcid_comment"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>' ),
 			$orcid,
 			$orcid
 		);
+
+		// Allow position to be altered
+		$html_position = apply_filters( 'orcid_comment_text_html_position', 'top' );
+		if ( 'top' == $html_position ) {
+			return $html . $text;
+		} else {
+			return $text . $html;
+		}
+
 	}
-	
-	return $html . $text;
+
+	// Always return the original comment regardless
+	return $text;
 
 }
 
