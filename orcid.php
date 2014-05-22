@@ -110,7 +110,13 @@ function the_content_orcid( $content ){
 	if ( ! $orcid )
 		return $content;
 
-	echo '<div class="wp_orcid_post"><a href="http://orcid.org/'.$orcid.'" target="_blank" rel="author">'.$orcid.'</a></div>'.$content;
+	$html = sprintf(
+		apply_filters( 'orcid_the_content_html', '<div class="wp_orcid_post"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>' ),
+		$orcid,
+		$orcid
+	);
+
+	return $html . $content;
 }
 
 /* returns the authors orcid for use in custom templates simply use <?php echo get_the_author_orcid(); ?> in a content tempate to display the authors ORCID */
