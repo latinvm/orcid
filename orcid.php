@@ -101,9 +101,16 @@ function admin_user_profile_orcid($user_id){
 
 /* add orcid to top of post content, comment out this function if you want to use get_the_author_orcid() to manually add the ORCID to the post template */
 add_filter('the_content', 'the_content_orcid');
-function the_content_orcid($content){
+function the_content_orcid( $content ){
+
+	// Get this author's ORCID
 	$orcid = get_the_author_orcid();
-    echo '<div class="wp_orcid_post"><a href="http://orcid.org/'.$orcid.'" target="_blank" rel="author">'.$orcid.'</a></div>'.$content;   
+
+	// Stop if there is no ORCID
+	if ( ! $orcid )
+		return $content;
+
+	echo '<div class="wp_orcid_post"><a href="http://orcid.org/'.$orcid.'" target="_blank" rel="author">'.$orcid.'</a></div>'.$content;
 }
 
 /* returns the authors orcid for use in custom templates simply use <?php echo get_the_author_orcid(); ?> in a content tempate to display the authors ORCID */
