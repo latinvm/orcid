@@ -26,7 +26,7 @@ Author URI: http://www.elsevier.com
 
 add_action( 'wp_enqueue_scripts', 'add_orcid_stylesheet' );
 function add_orcid_stylesheet() {
-	wp_enqueue_style( 'prefix-style', plugins_url('orcid.css', __FILE__) );
+	wp_enqueue_style( 'prefix-style', plugins_url('assets/orcid.css', __FILE__) );
 }
 
 /* override default comment fields */
