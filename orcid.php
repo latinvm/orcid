@@ -55,8 +55,8 @@ function save_comment_metadata($comment_id) {
 	if ((isset($_POST['orcid'])) && ($_POST['orcid'] != '')){
 		$orcid = wp_filter_nohtml_kses($_POST['orcid']);
 		// todo: add filter to validate ORCID
+		add_comment_meta($comment_id,'orcid',$orcid);
 	}
-	add_comment_meta($comment_id,'orcid',$orcid);
 }
 
 /* add ORCID link to default to comment text, comment this function if you want to modify your templates and manually add the ORCID using get_the_comment_orcid() */
