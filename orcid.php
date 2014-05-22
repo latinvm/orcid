@@ -61,19 +61,45 @@ function save_comment_metadata($comment_id) {
 
 /* add ORCID link to default to comment text, comment this function if you want to modify your templates and manually add the ORCID using get_the_comment_orcid() */
 add_filter('comment_text','comment_orcid_text');
-function comment_orcid_text($text){
+function comment_orcid_text( $text ) {
+
+	// Get the ORCID
 	$orcid = get_the_comment_orcid();
-	if ($orcid) {
+	if ( ! $orcid ) {
+		// Perhaps an existing user, so try to grab user meta
+		$orcid = get_user_meta( orcid_get_comment_author_id( get_comment_ID() ), 'orcid', true );
+	}
+
+	if ( $orcid ) {
 		$text = '<div class="wp_orcid_comment"><a href="http://orcid.org/'.$orcid.'" target="_blank" rel="author">'.$orcid.'</a></div>'.$text;
 	}
 	
 	return $text;
+
 }
 
 /* returns the comments orcid for use in custom templates simply use <?php echo get_the_comment_orcid(); ?> in a comment template to display the comments ORCID */
 function get_the_comment_orcid(){
 	$orcid = get_comment_meta(get_comment_ID(),'orcid',true);
     return $orcid;
+}
+
+/**
+ * Grabs the comment author ID because WP's function returns display name
+ *
+ * @param $comment_id The ID of the comment
+ */
+function orcid_get_comment_author_id( $comment_id ) {
+
+	$comment = get_comment( $comment_id );
+
+	if ( $comment->user_id && $user = get_userdata( $comment->user_id ) ) {
+		return $user->ID;
+	}
+
+	// If all else fails
+	return false;
+
 }
 
 /* add ORCID field to user profile / user admin forms */
