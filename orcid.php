@@ -71,10 +71,14 @@ function comment_orcid_text( $text ) {
 	}
 
 	if ( $orcid ) {
-		$text = '<div class="wp_orcid_comment"><a href="http://orcid.org/'.$orcid.'" target="_blank" rel="author">'.$orcid.'</a></div>'.$text;
+		$html = sprintf(
+			apply_filters( 'orcid_comment_text_html', '<div class="wp_orcid_comment"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>' ),
+			$orcid,
+			$orcid
+		);
 	}
 	
-	return $text;
+	return $html . $text;
 
 }
 
