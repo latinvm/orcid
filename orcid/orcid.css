@@ -1,0 +1,19 @@
+.wp_orcid_comment {
+	color: #767676;
+	font-size:12px;
+	background-image: url('orcid.png');
+	background-repeat: no-repeat;
+	background-position: 0 3px;
+	padding-left: 14px;
+}
+
+.wp_orcid_post {
+	color: #767676;
+	font-size:12px;
+	position: relative;
+	top: -15px;
+	background-image: url('orcid.png');
+	background-repeat: no-repeat;
+	background-position: 0 3px;
+	padding-left: 14px;
+}
