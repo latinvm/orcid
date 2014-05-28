@@ -32,7 +32,7 @@ class wpORCID {
 		$this->pluginPath = dirname(__FILE__);
 		
 		/* hook actions / filters onto WP functions */
-		add_action('wp_enqueue_scripts',array($this,'add_orcid_stylesheet'));
+		add_action('wp_enqueue_scripts',array($this,'add_orcid_assets'));
 		
 		add_filter('comment_form_default_fields',array($this,'comment_form_custom_fields'));
 		
@@ -59,14 +59,19 @@ class wpORCID {
     }
 	
 	/* add the default plugin stylesheet */
-	public function add_orcid_stylesheet() {
+	public function add_orcid_assets() {
 		wp_enqueue_style( 'prefix-style', plugins_url('assets/orcid.css', __FILE__) );
+		wp_enqueue_script( 'orcid-javascript', 
+			plugins_url('assets/orcid.js', __FILE__),
+			array( 'jquery' ) 
+		);
 	}
 	
 	/* override default comment fields */
 	public function comment_form_custom_fields($fields) {
 		$commenter = wp_get_current_commenter();
-
+		$assets_path = plugins_url('assets/', __FILE__);
+		
 		$req = get_option('require_name_email');
 		if ($req){
 			$aria_req = ' aria-required="true"';
@@ -77,7 +82,12 @@ class wpORCID {
 		$fields['author'] = '<p class="comment-form-author"><label for="author">'.__( 'Name' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="author" name="author" type="text" value="'.esc_attr($commenter['comment_author']).'" size="30" '.$aria_req.' /></p>';
 		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30" '.$aria_req.' /></p>';
 		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" /></p>';
-		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID</label><input id="orcid" name="orcid" type="text" /><br /><span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
+		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID
+			<img src = "'.$assets_path.'orcid.png'.'" id = "orcid-success" />
+			<img src = "'.$assets_path.'close-icon.png" id = "orcid-failure" />
+		</label>
+		<input id="orcid" name="orcid" type="text" /><br />
+		<span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
 
 		return $fields;
 	}
