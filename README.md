@@ -11,7 +11,6 @@ TODO:
 	if(regexResult){
 		// Got an orcid
 	}
-- add a settings page?
+- add a plugin settings page
 - use OAuth to allow social login via orcid.org
-- add delete all ORCID metadata when uninstalling plugin
 - add ORCID to admin/update comment page
