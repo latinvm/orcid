@@ -82,14 +82,18 @@ class wpORCID {
 		return $fields;
 	}
 	
-	/* override default comment action */
+	/* Attach additional comment data */
+	/* This does not override the comment insertion. The comment has already
+	been created at the time this hook is run. I don't think there is a hook
+	to validate comments, so if we want to add ORCID comment validation, we'll
+	have to write a new comments.php script*/
 	public function save_comment_metadata($comment_id) {
 		if ((isset($_POST['orcid'])) && ($_POST['orcid'] != '')){
 			$orcid = wp_filter_nohtml_kses($_POST['orcid']);
-			
-			// todo: add filter to validate ORCID
 			$orcid = $this->strip_orcid_url($orcid);
-			add_comment_meta($comment_id,'orcid',$orcid);
+			if ( $this->validate_orcid($orcid) ) {
+				add_comment_meta($comment_id,'orcid',$orcid);
+			}
 		}
 	}
 	
@@ -103,6 +107,17 @@ class wpORCID {
 			$orcid = $user_input;
 		}
 		return $orcid;	
+	}
+	
+	/*Validate the ORCID number to ensure it only contains letters, numbers, and the dash.
+	In the future we should probably use the ORCID API to ensure that it's associated with
+	an actual profile (this would reduce comment spam substantially)*/
+	function validate_orcid($user_input) {
+		if ( preg_match('/[^0-9A-Za-z\-]/', $user_input) ) {
+			return FALSE;
+		} else {
+			return TRUE;
+		}
 	}
 	
 	
