@@ -30,9 +30,11 @@ class wpORCID {
 	
     public function __construct(){
 		$this->pluginPath = dirname(__FILE__);
+		$this->assets_path = plugins_url('assets/', __FILE__);
 		
 		/* hook actions / filters onto WP functions */
-		add_action('wp_enqueue_scripts',array($this,'add_orcid_stylesheet'));
+		add_action('wp_enqueue_scripts',array($this,'add_orcid_assets'));
+		add_action('admin_enqueue_scripts', array($this, 'add_orcid_assets'));
 		
 		add_filter('comment_form_default_fields',array($this,'comment_form_custom_fields'));
 		
@@ -59,14 +61,18 @@ class wpORCID {
     }
 	
 	/* add the default plugin stylesheet */
-	public function add_orcid_stylesheet() {
+	public function add_orcid_assets() {
 		wp_enqueue_style( 'prefix-style', plugins_url('assets/orcid.css', __FILE__) );
+		wp_enqueue_script( 'orcid-javascript', 
+			plugins_url('assets/orcid.js', __FILE__),
+			array( 'jquery' ) 
+		);
 	}
 	
 	/* override default comment fields */
 	public function comment_form_custom_fields($fields) {
 		$commenter = wp_get_current_commenter();
-
+		
 		$req = get_option('require_name_email');
 		if ($req){
 			$aria_req = ' aria-required="true"';
@@ -74,28 +80,65 @@ class wpORCID {
 			$aria_req = '';
 		}
 
-		$fields['author'] = '<p class="comment-form-author"><label for="author">'.__( 'Name' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="author" name="author" type="text" value="'.esc_attr($commenter['comment_author']).'" size="30" tabindex="1"'.$aria_req.' /></p>';
-		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30"  tabindex="2"'.$aria_req.' /></p>';
-		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" tabindex="3" /></p>';
-		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID</label><input id="orcid" name="orcid" type="text" maxlength="19"  tabindex="4" /><br /><span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
+		$fields['author'] = '<p class="comment-form-author"><label for="author">'.__( 'Name' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="author" name="author" type="text" value="'.esc_attr($commenter['comment_author']).'" size="30" '.$aria_req.' /></p>';
+		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30" '.$aria_req.' /></p>';
+		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" /></p>';
+		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID
+			<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" />
+			<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" />
+		</label>
+		<input id="orcid" name="orcid" type="text" /><br />
+		<span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
 
 		return $fields;
 	}
 	
-	/* override default comment action */
+	/* Attach additional comment data */
+	/* This does not override the comment insertion. The comment has already
+	been created at the time this hook is run. I don't think there is a hook
+	to validate comments, so if we want to add ORCID comment validation, we'll
+	have to write a new comments.php script*/
 	public function save_comment_metadata($comment_id) {
 		if ((isset($_POST['orcid'])) && ($_POST['orcid'] != '')){
 			$orcid = wp_filter_nohtml_kses($_POST['orcid']);
-			
-			// todo: add filter to validate ORCID
-			add_comment_meta($comment_id,'orcid',$orcid);
+			$orcid = $this->strip_orcid_url($orcid);
+			if ( $this->validate_orcid($orcid) ) {
+				add_comment_meta($comment_id,'orcid',$orcid);
+			}
 		}
 	}
+	
+	/*covers cases in which the user enters the full URL to their ORCID profile.
+	Finds 'orcid.org/' in the inputed string and returns the entire string following it*/
+	function strip_orcid_url($user_input) {
+		if ( ( $b = strpos($user_input, 'orcid.org/') ) !== FALSE ) {
+			$e = $b + 10; //length of 'orcid.org/'
+			$orcid = substr($user_input, $e);
+		} else {
+			$orcid = $user_input;
+		}
+		return $orcid;	
+	}
+	
+	/*Validate the ORCID number to ensure it only contains letters, numbers, and the dash.
+	In the future we should probably use the ORCID API to ensure that it's associated with
+	an actual profile (this would reduce comment spam substantially)*/
+	function validate_orcid($user_input) {
+		if ( preg_match('/[^0-9A-Za-z\-]/', $user_input) ) {
+			return FALSE;
+		} else {
+			return TRUE;
+		}
+	}
+	
 	
 	/* add ORCID field to user profile / user admin forms */
 	public function show_user_profile_orcid($user) {
 		$orcid = $user->orcid;
-		echo '<table class="form-table"><tr><th><label for="orcid">ORCID</label></th><td><input type="text" id="orcid" name="orcid" class="regular-text" value="'.$orcid.'" maxlength="19" /><br /><span class="description">Add your ORCID here. (e.g. 0000-0002-7299-680X)</span></td></tr></table>';
+		echo '<table class="form-table"><tr><th><label for="orcid">ORCID</label></th><td><input type="text" id="orcid" name="orcid" class="regular-text" value="'.$orcid.'" />
+		<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" />
+		<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" />		
+		<br /><span class="description">Add your ORCID here. (e.g. 0000-0002-7299-680X)</span></td></tr></table>';
 	}
 
 	/* update orcid metadata for user */
