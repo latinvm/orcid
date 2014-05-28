@@ -77,7 +77,7 @@ class wpORCID {
 		$fields['author'] = '<p class="comment-form-author"><label for="author">'.__( 'Name' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="author" name="author" type="text" value="'.esc_attr($commenter['comment_author']).'" size="30" '.$aria_req.' /></p>';
 		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30" '.$aria_req.' /></p>';
 		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" /></p>';
-		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID</label><input id="orcid" name="orcid" type="text" maxlength="19" /><br /><span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
+		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID</label><input id="orcid" name="orcid" type="text" /><br /><span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
 
 		return $fields;
 	}
@@ -88,9 +88,23 @@ class wpORCID {
 			$orcid = wp_filter_nohtml_kses($_POST['orcid']);
 			
 			// todo: add filter to validate ORCID
+			$orcid = $this->strip_orcid_url($orcid);
 			add_comment_meta($comment_id,'orcid',$orcid);
 		}
 	}
+	
+	/*covers cases in which the user enters the full URL to their ORCID profile.
+	Finds 'orcid.org/' in the inputed string and returns the entire string following it*/
+	function strip_orcid_url($user_input) {
+		if ( ( $b = strpos($user_input, 'orcid.org/') ) !== FALSE ) {
+			$e = $b + 10; //length of 'orcid.org/'
+			$orcid = substr($user_input, $e);
+		} else {
+			$orcid = $user_input;
+		}
+		return $orcid;	
+	}
+	
 	
 	/* add ORCID field to user profile / user admin forms */
 	public function show_user_profile_orcid($user) {
