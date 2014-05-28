@@ -30,9 +30,11 @@ class wpORCID {
 	
     public function __construct(){
 		$this->pluginPath = dirname(__FILE__);
+		$this->assets_path = plugins_url('assets/', __FILE__);
 		
 		/* hook actions / filters onto WP functions */
 		add_action('wp_enqueue_scripts',array($this,'add_orcid_assets'));
+		add_action('admin_enqueue_scripts', array($this, 'add_orcid_assets'));
 		
 		add_filter('comment_form_default_fields',array($this,'comment_form_custom_fields'));
 		
@@ -70,7 +72,6 @@ class wpORCID {
 	/* override default comment fields */
 	public function comment_form_custom_fields($fields) {
 		$commenter = wp_get_current_commenter();
-		$assets_path = plugins_url('assets/', __FILE__);
 		
 		$req = get_option('require_name_email');
 		if ($req){
@@ -83,8 +84,8 @@ class wpORCID {
 		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30" '.$aria_req.' /></p>';
 		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" /></p>';
 		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID
-			<img src = "'.$assets_path.'orcid.png'.'" id = "orcid-success" />
-			<img src = "'.$assets_path.'close-icon.png" id = "orcid-failure" />
+			<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" />
+			<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" />
 		</label>
 		<input id="orcid" name="orcid" type="text" /><br />
 		<span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
@@ -134,7 +135,10 @@ class wpORCID {
 	/* add ORCID field to user profile / user admin forms */
 	public function show_user_profile_orcid($user) {
 		$orcid = $user->orcid;
-		echo '<table class="form-table"><tr><th><label for="orcid">ORCID</label></th><td><input type="text" id="orcid" name="orcid" class="regular-text" value="'.$orcid.'" maxlength="19" /><br /><span class="description">Add your ORCID here. (e.g. 0000-0002-7299-680X)</span></td></tr></table>';
+		echo '<table class="form-table"><tr><th><label for="orcid">ORCID</label></th><td><input type="text" id="orcid" name="orcid" class="regular-text" value="'.$orcid.'" />
+		<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" />
+		<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" />		
+		<br /><span class="description">Add your ORCID here. (e.g. 0000-0002-7299-680X)</span></td></tr></table>';
 	}
 
 	/* update orcid metadata for user */
