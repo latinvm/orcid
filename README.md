@@ -13,6 +13,5 @@ TODO:
 	}
 - add a settings page?
 - use OAuth to allow social login via orcid.org
-- make sure logged in users comments display orcid with comments.
 - add delete all ORCID metadata when uninstalling plugin
 - add ORCID to admin/update comment page
