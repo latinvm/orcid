@@ -74,10 +74,10 @@ class wpORCID {
 			$aria_req = '';
 		}
 
-		$fields['author'] = '<p class="comment-form-author"><label for="author">'.__( 'Name' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="author" name="author" type="text" value="'.esc_attr($commenter['comment_author']).'" size="30" tabindex="1"'.$aria_req.' /></p>';
-		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30"  tabindex="2"'.$aria_req.' /></p>';
-		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" tabindex="3" /></p>';
-		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID</label><input id="orcid" name="orcid" type="text" maxlength="19"  tabindex="4" /><br /><span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
+		$fields['author'] = '<p class="comment-form-author"><label for="author">'.__( 'Name' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="author" name="author" type="text" value="'.esc_attr($commenter['comment_author']).'" size="30" '.$aria_req.' /></p>';
+		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30" '.$aria_req.' /></p>';
+		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" /></p>';
+		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID</label><input id="orcid" name="orcid" type="text" maxlength="19" /><br /><span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
 
 		return $fields;
 	}
