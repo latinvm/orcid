@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: ORCID
-Version: 0.42
+Version: 0.5
 Plugin URI: https://github.com/ServerDotBiz/orcid
 Description: This plugin adds a field for ORCID to users posts and comments
 Author: Roy Boverhof
