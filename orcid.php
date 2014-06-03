@@ -191,18 +191,13 @@ class wpORCID {
 		if ($orcid){
 			// allow HTML override
 			$html = sprintf(
-				apply_filters('orcid_the_content_html','<div class="wp_orcid_post"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
+				'<div class="wp_orcid_post"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>',
 				$orcid,
 				$orcid
 			);
 			
-			// allow position to be altered
-			$html_position = apply_filters('orcid_the_content_html_position','top');
-			if ($html_position == 'top') {
-				return $html.$content;
-			} else {
-				return $content.$html;
-			}
+			return $html.$content;
+		
 		} else {
 			return $content;
 		}
