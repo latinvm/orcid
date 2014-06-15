@@ -24,6 +24,7 @@ Author URI: http://www.elsevier.com
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+
 class wpORCID {
 	/* not used for now, might be useful later */
 	protected $pluginPath;
@@ -33,25 +34,30 @@ class wpORCID {
 		$this->assets_path = plugins_url('assets/', __FILE__);
 		
 		/* hook actions / filters onto WP functions */
+		//js and css
 		add_action('wp_enqueue_scripts',array($this,'add_orcid_assets'));
 		add_action('admin_enqueue_scripts', array($this, 'add_orcid_assets'));
 		
-		add_filter('comment_form_default_fields',array($this,'comment_form_custom_fields'));
+		if ( get_option('add-orcid-to-comments', 'on') == 'on' ) {
+			//add to comments fields
+			add_filter('comment_form_default_fields',array($this,'comment_form_custom_fields'));
+			add_action('comment_post',array($this,'save_comment_metadata'));	
+			//add to coment output
+			add_filter('comment_text',array($this,'comment_orcid_text'));
+		}
 		
-		add_action('comment_post',array($this,'save_comment_metadata'));
-		
+		//user profile hooks
 		add_action('user_new_form',array($this,'show_user_profile_orcid'));
 		add_action('edit_user_profile',array($this,'show_user_profile_orcid'));
 		add_action('show_user_profile',array($this,'show_user_profile_orcid'));
-		
 		add_action('personal_options_update',array($this,'update_user_profile_orcid'));
-		
 		add_action('edit_user_profile_update',array($this,'admin_user_profile_orcid'));
 		add_action('user_register',array($this,'admin_user_profile_orcid'));
 		
+		//add options page to settings menu
 		add_action('admin_menu', array($this, 'orcid_settings_menu'));
 		
-		add_filter('comment_text',array($this,'comment_orcid_text'));
+		//output
 		
 		add_filter('the_content',array($this,'the_content_orcid'));
 		
@@ -65,6 +71,7 @@ class wpORCID {
 	/* add the default plugin stylesheet */
 	public function add_orcid_assets() {
 		wp_enqueue_style( 'prefix-style', plugins_url('assets/orcid.css', __FILE__) );
+		//MUST be queued such and jQuery loads first
 		wp_enqueue_script( 'orcid-javascript', 
 			plugins_url('assets/orcid.js', __FILE__),
 			array( 'jquery' ) 
@@ -75,6 +82,14 @@ class wpORCID {
 	function orcid_settings_menu() {
 		add_options_page('ORCID for Wordpress', 'ORCID for Wordpress', 
 		'activate_plugins', 'orcid-settings', array($this, 'orcid_settings_form'));
+		add_action( 'admin_init', array($this, 'orcid_register_settings') );
+		
+	}
+	
+	function orcid_register_settings() {
+		register_setting('orcid_settings_group', 'add-orcid-to-posts');
+		register_setting('orcid_settings_group', 'add-orcid-to-pages');
+		register_setting('orcid_settings_group', 'add-orcid-to-comments');
 	}
 	
 	function orcid_settings_form() {
@@ -84,22 +99,17 @@ class wpORCID {
 			?>
 				<div class = "wrap">
 					<h2>ORCID for Wordpress Settings</h2>
-					<form method = "POST" id="orcid-settings">
-						<?php wp_nonce_field( 'orcid_nonce' ); ?>
+					<form method = "POST" action="options.php" id="orcid-settings">
+						<?php settings_fields('orcid_settings_group'); ?>
 						<table class="form-table">
 							<tr>
 								<td>Add ORCID to</td>
-								<td><input type="checkbox" name="add-orcid" value="posts" />
-								<label for="posts">Posts</label><br />
-								
-								<input type="checkbox" name="add-orcid" value="pages" />
-								<label for="pages">Pages</label><br />
-								
-								<input type="checkbox" name="add-orcid" value="comments" />
-								<label for="comments">Comments</label></td>
-								
 								<td>
-								</td>
+									<?php checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
+									<?php checkbox('add-orcid-to-pages', 'Pages'); ?><br />
+									<?php checkbox('add-orcid-to-comments', 'Comments', 'on'); ?>	
+								</td>								
+								<td></td>
 							</tr>
 							
 							
@@ -235,16 +245,22 @@ class wpORCID {
 		// get author's ORCID
 		$orcid = $this->get_the_author_orcid();
 		
-		if ($orcid){
+		if ( get_post_type() == 'post' ) {
+			if ( !get_option( 'add-orcid-to-posts', 'on' ) ) return $content; 
+		} elseif ( get_post_type() == 'page' ) {
+			if ( !get_option( 'add-orcid-to-pages') ) return $content;
+		} else {
+			return $content;
+		}
+		
+		if ($orcid) {
 			// allow HTML override
 			$html = sprintf(
 				'<div class="wp_orcid_post"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>',
 				$orcid,
 				$orcid
 			);
-			
 			return $html.$content;
-		
 		} else {
 			return $content;
 		}
@@ -311,4 +327,15 @@ function orcid_author(){
 		echo '';
 	}
 }
+
+function checkbox($name, $label, $default = FALSE) {
+	echo '<input type="checkbox" name="'.$name.'" ';
+	if ( get_option($name, $default) == 'on' ) {
+		echo 'checked="checked" />'; 
+	} else {
+		echo '/>';
+	}
+	echo '<label for="'.$name.'">'.$label.'</label>';
+} 
+
 ?>
