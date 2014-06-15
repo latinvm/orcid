@@ -229,19 +229,9 @@ class wpORCID {
 		
 		if ($orcid){
 			// allow HTML override
-			$html = sprintf(
-				apply_filters('orcid_comment_text_html','<div class="wp_orcid_comment"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
-				$orcid,
-				$orcid
-			);
+			$html = $this->orcid_html($orcid);
 			
-			// allow position to be altered
-			$html_position = apply_filters('orcid_comment_text_html_position','top');
-			if ('top' == $html_position){
-				return $html.$text;
-			} else {
-				return $text.$html;
-			}
+			return $html.$text;
  
 		} else {
 			return $text;
@@ -250,24 +240,20 @@ class wpORCID {
 	
 	/* add orcid to top of post content, comment out this function if you want to use get_the_author_orcid() to manually add the ORCID to the post template */
 	function the_content_orcid($content){
-		// get author's ORCID
-		$orcid = $this->get_the_author_orcid();
-		
+		//check if ORCID HTML goes on this post type
 		if ( get_post_type() == 'post' ) {
 			if ( !get_option( 'add-orcid-to-posts', 'on' ) ) return $content; 
 		} elseif ( get_post_type() == 'page' ) {
 			if ( !get_option( 'add-orcid-to-pages') ) return $content;
 		} else {
+			//all other post types
 			return $content;
 		}
 		
-		if ($orcid) {
+		// get author's ORCID
+		if ( $orcid = $this->get_the_author_orcid() ) {
 			// allow HTML override
-			$html = sprintf(
-				'<div class="wp_orcid_post"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>',
-				$orcid,
-				$orcid
-			);
+			$html = $this->orcid_html($orcid);
 			return $html.$content;
 		} else {
 			return $content;
@@ -298,11 +284,14 @@ class wpORCID {
 	}
 	
 	/* use the shortcode [ORCID] to display the authors ORCID in a post */
-	public function shortcode(){
+	public function shortcode(){	
 		$orcid = get_the_author_meta('orcid');
-		
-		return $orcid;
+		return $this->orcid_html($orcid);
     }
+    
+    public function orcid_html($orcid) {
+		return sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $orcid, $orcid);
+	}
 }
 
 $wpORCID = new wpORCID();
