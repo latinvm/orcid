@@ -17,3 +17,10 @@
 #orcid-success, #orcid-failure {
 	display: none;
 }
+
+.form-table td:first-child {
+	text-align: right;
+	vertical-align: top;
+	font-weight: bold;
+}
+

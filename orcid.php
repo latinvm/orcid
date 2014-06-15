@@ -49,6 +49,8 @@ class wpORCID {
 		add_action('edit_user_profile_update',array($this,'admin_user_profile_orcid'));
 		add_action('user_register',array($this,'admin_user_profile_orcid'));
 		
+		add_action('admin_menu', array($this, 'orcid_settings_menu'));
+		
 		add_filter('comment_text',array($this,'comment_orcid_text'));
 		
 		add_filter('the_content',array($this,'the_content_orcid'));
@@ -68,6 +70,75 @@ class wpORCID {
 			array( 'jquery' ) 
 		);
 	}
+	
+	/*Add the ORCID settings menu*/
+	function orcid_settings_menu() {
+		add_options_page('ORCiD for Wordpress', 'ORCiD for Wordpress', 
+		'activate_plugins', 'orcid-settings', array($this, 'orcid_settings_form'));
+	}
+	
+	function orcid_settings_form() {
+		if ( $_SERVER['REQUEST_METHOD'] === 'POST') {
+			check_admin_referer( 'orcid_nonce' );
+		} else {
+			?>
+				<div class = "wrap">
+					<h2>ORCiD for Wordpress Settings</h2>
+					<form method = "POST" id="orcid-settings">
+						<?php wp_nonce_field( 'orcid_nonce' ); ?>
+						<table class="form-table">
+							<tr>
+								<td>Add ORCiD to</td>
+								<td><input type="checkbox" name="add-orcid" value="posts" />
+								<label for="posts">Posts</label><br />
+								
+								<input type="checkbox" name="add-orcid" value="pages" />
+								<label for="pages">Pages</label><br />
+								
+								<input type="checkbox" name="add-orcid" value="comments" />
+								<label for="comments">Comments</label><br />
+								
+								<input type="checkbox" name="add-orcid" value="shortcode" />
+								<label for="shortcode">Shortcode</label>
+								<input type="text" name="shortcode-text" /><br />
+								
+								<input type="checkbox" name="add-orcid" value="custom-field" />
+								<label for="custon-field">Custom field</label>
+								<input type="text" name="custom-field" /></td>
+								
+								<td>
+								</td>
+							</tr>
+							
+							<tr>
+								<td>Display</td>
+								<td><input type="radio" name="orcid-display" value="numbers" />
+								<label for="numbers">Numbers</label><br />
+								
+								<input type="radio" name="orcid-display" value="names" />
+								<label for="names">Names</label></td>
+								<td></td>
+							</tr>
+							
+							<tr>	
+								<td>ORCiD validation</td>
+								<td><input type="checkbox" name="validate" value="true" />
+								<label for="validate">Automatically approve comments that link to valid ORCiD profiles</label>
+								<td></td>
+							</tr>
+							
+							<tr>
+								<td></td>
+								<td><input type="submit" name="submit" value="Save changes" class="button-primary" /></td>
+								<td></td>
+							</tr>
+						</table>
+					</form>
+				</div>		
+			<?php
+		}
+	}
+	
 	
 	/* override default comment fields */
 	public function comment_form_custom_fields($fields) {
