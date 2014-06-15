@@ -73,7 +73,7 @@ class wpORCID {
 	
 	/*Add the ORCID settings menu*/
 	function orcid_settings_menu() {
-		add_options_page('ORCiD for Wordpress', 'ORCiD for Wordpress', 
+		add_options_page('ORCID for Wordpress', 'ORCID for Wordpress', 
 		'activate_plugins', 'orcid-settings', array($this, 'orcid_settings_form'));
 	}
 	
@@ -83,12 +83,12 @@ class wpORCID {
 		} else {
 			?>
 				<div class = "wrap">
-					<h2>ORCiD for Wordpress Settings</h2>
+					<h2>ORCID for Wordpress Settings</h2>
 					<form method = "POST" id="orcid-settings">
 						<?php wp_nonce_field( 'orcid_nonce' ); ?>
 						<table class="form-table">
 							<tr>
-								<td>Add ORCiD to</td>
+								<td>Add ORCID to</td>
 								<td><input type="checkbox" name="add-orcid" value="posts" />
 								<label for="posts">Posts</label><br />
 								
@@ -121,9 +121,9 @@ class wpORCID {
 							</tr>
 							
 							<tr>	
-								<td>ORCiD validation</td>
+								<td>ORCID validation</td>
 								<td><input type="checkbox" name="validate" value="true" />
-								<label for="validate">Automatically approve comments that link to valid ORCiD profiles</label>
+								<label for="validate">Automatically approve comments that link to valid ORCID profiles</label>
 								<td></td>
 							</tr>
 							
