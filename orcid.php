@@ -296,6 +296,48 @@ class wpORCID {
 	}
 }
 
+class OrcidAPI {
+	public $profile_xml, $connection, $name;
+	function __construct($orcid) {
+		$url = 'http://pub.orcid.org/'.$orcid;
+		if ( $this->profile_xml = $this->remote_call($url) ) {
+			$this->connection = TRUE;
+		} else {
+			throw new Exception('No connection');
+			$this->connection = FALSE;
+			$this->name = FALSE;
+		}
+		$dom = new DOMDocument();
+		$dom->loadXML($this->profile_xml);
+		$node = $dom->getElementsByTagName('credit-name');
+		$this->name = $node->item(0)->nodeValue;
+	}
+	
+	
+	/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	 * Taken from impactpubs by Casey A. Ydenberg
+	 * string page remote_call(string url)
+	 * Checks if the WP HTTP functions are installed.
+	 * If they are, uses WP to retrieve the page and returns the page body.
+	 * If not, uses file_get_contents and passes back the whole page.
+	 */
+	function remote_call($url) {
+		if ( function_exists('wp_remote_get') ) {
+			return wp_remote_get($url);
+		} else {
+			try {
+				$file = file_get_contents($url);
+				return $file;
+			} catch (Exception $e) {
+				throw new Exception('No connection');
+				return FALSE;
+			}
+		}
+	}
+}
+
+
+
 $wpORCID = new wpORCID();
 
 /* returns the comments orcid for use in custom templates simply use <?php orcid_comment(); ?> in a comment template to display the comments ORCID */
