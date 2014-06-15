@@ -1,17 +1,10 @@
-.wp_orcid_comment {
+.wp_orcid_field {
 	background-image: url('orcid.png');
 	background-repeat: no-repeat;
 	background-position: 0 3px;
 	padding-left: 14px;
 	font-size: 0.75em;
-}
-
-.wp_orcid_post {
-	background-image: url('orcid.png');
-	background-repeat: no-repeat;
-	background-position: 0 3px;
-	padding-left: 14px;
-	font-size: 0.75em;
+	padding-bottom: 5px;
 }
 
 #orcid-success, #orcid-failure {
