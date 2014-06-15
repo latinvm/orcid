@@ -61,8 +61,10 @@ class wpORCID {
 		
 		add_filter('the_content',array($this,'the_content_orcid'));
 		
-		/* add a shortcode [ORCID] to be used in templates */
-		add_shortcode('ORCID',array($this,'shortcode'));
+		if ( get_option('use-orcid-shortcode') ) {
+			/* add a shortcode [ORCID] to be used in templates */
+			add_shortcode( get_option('orcid-shortcode'), array($this,'shortcode') );
+		}
 		
 		/* add shortcode support for widgets */
 		add_filter('widget_text', 'do_shortcode');
@@ -90,6 +92,8 @@ class wpORCID {
 		register_setting('orcid_settings_group', 'add-orcid-to-posts');
 		register_setting('orcid_settings_group', 'add-orcid-to-pages');
 		register_setting('orcid_settings_group', 'add-orcid-to-comments');
+		register_setting('orcid_settings_group', 'use-orcid-shortcode');
+		register_setting('orcid_settings_group', 'orcid-shortcode');
 	}
 	
 	function orcid_settings_form() {
@@ -107,7 +111,11 @@ class wpORCID {
 								<td>
 									<?php checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
 									<?php checkbox('add-orcid-to-pages', 'Pages'); ?><br />
-									<?php checkbox('add-orcid-to-comments', 'Comments', 'on'); ?>	
+									<?php checkbox('add-orcid-to-comments', 'Comments', 'on'); ?><br />
+									<?php checkbox('use-orcid-shortcode', 'Shortcode'); ?>
+									[<input type="text" name="orcid-shortcode"
+									value="<?php echo get_option('orcid-shortcode', 'ORCID'); ?>"
+									/ >]	
 								</td>								
 								<td></td>
 							</tr>
