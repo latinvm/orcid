@@ -96,36 +96,12 @@ class wpORCID {
 								<label for="pages">Pages</label><br />
 								
 								<input type="checkbox" name="add-orcid" value="comments" />
-								<label for="comments">Comments</label><br />
-								
-								<input type="checkbox" name="add-orcid" value="shortcode" />
-								<label for="shortcode">Shortcode</label>
-								<input type="text" name="shortcode-text" /><br />
-								
-								<input type="checkbox" name="add-orcid" value="custom-field" />
-								<label for="custon-field">Custom field</label>
-								<input type="text" name="custom-field" /></td>
+								<label for="comments">Comments</label></td>
 								
 								<td>
 								</td>
 							</tr>
 							
-							<tr>
-								<td>Display</td>
-								<td><input type="radio" name="orcid-display" value="numbers" />
-								<label for="numbers">Numbers</label><br />
-								
-								<input type="radio" name="orcid-display" value="names" />
-								<label for="names">Names</label></td>
-								<td></td>
-							</tr>
-							
-							<tr>	
-								<td>ORCID validation</td>
-								<td><input type="checkbox" name="validate" value="true" />
-								<label for="validate">Automatically approve comments that link to valid ORCID profiles</label>
-								<td></td>
-							</tr>
 							
 							<tr>
 								<td></td>
