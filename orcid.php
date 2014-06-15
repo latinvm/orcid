@@ -107,7 +107,7 @@ class wpORCID {
 						<?php settings_fields('orcid_settings_group'); ?>
 						<table class="form-table">
 							<tr>
-								<td>Add ORCID to</td>
+								<td>Automatically add ORCID to</td>
 								<td>
 									<?php checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
 									<?php checkbox('add-orcid-to-pages', 'Pages'); ?><br />
@@ -119,6 +119,8 @@ class wpORCID {
 								</td>								
 								<td></td>
 							</tr>
+							
+							<tr>Note: You can insert ORCIDs into templates directly using <b>the_orcid_author()</b> and <b>the_orcid_comment_author()</b></tr>
 							
 							
 							<tr>
@@ -229,7 +231,7 @@ class wpORCID {
 		
 		if ($orcid){
 			// allow HTML override
-			$html = $this->orcid_html($orcid);
+			$html = $this->get_orcid_html($orcid);
 			
 			return $html.$text;
  
@@ -253,7 +255,7 @@ class wpORCID {
 		// get author's ORCID
 		if ( $orcid = $this->get_the_author_orcid() ) {
 			// allow HTML override
-			$html = $this->orcid_html($orcid);
+			$html = $this->get_orcid_html($orcid);
 			return $html.$content;
 		} else {
 			return $content;
@@ -286,10 +288,10 @@ class wpORCID {
 	/* use the shortcode [ORCID] to display the authors ORCID in a post */
 	public function shortcode(){	
 		$orcid = get_the_author_meta('orcid');
-		return $this->orcid_html($orcid);
+		return $this->get_orcid_html($orcid);
     }
     
-    public function orcid_html($orcid) {
+    public function get_orcid_html($orcid) {
 		return sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $orcid, $orcid);
 	}
 }
@@ -297,7 +299,7 @@ class wpORCID {
 $wpORCID = new wpORCID();
 
 /* returns the comments orcid for use in custom templates simply use <?php orcid_comment(); ?> in a comment template to display the comments ORCID */
-function orcid_comment(){
+function the_orcid_comment_author(){
 	global $wpORCID;
 	
 	$orcid = $wpORCID->get_the_comment_orcid();
@@ -307,19 +309,19 @@ function orcid_comment(){
 	}
 	
 	if ($orcid){
-		echo $orcid;
+		echo $wpORCID->get_orcid_html($orcid);
 	} else {
 		echo '';
 	}
 }
 
 /* returns the authors orcid for use in custom templates simply use <?php orcid_author(); ?> in a content tempate to display the authors ORCID */
-function orcid_author(){
+function the_orcid_author(){
 	global $wpORCID;
 	
 	$orcid = $wpORCID->get_the_author_orcid();
 	if ($orcid){
-		echo $orcid;
+		echo $wpORCID->get_orcid_html($orcid);
 	} else {
 		echo '';
 	}
