@@ -186,15 +186,15 @@ class wpORCID {
 				add_comment_meta($comment_id,'orcid',$orcid);
 				$api = new OrcidAPI($orcid);
 				if ( $api->connection && get_option('orcid-approve-comments') ) {
-					add_comment_meta($comment_id, 'orcid_name', $api->name );
+					add_comment_meta($comment_id, 'orcid-name', $api->name );
 					//approve the comment if the ORCID profile was found and that option is set
 					wp_set_comment_status($comment_id, 'approve');
 				} elseif ( $api->connection ) {
-					add_comment_meta($comment_id, 'orcid_name', $api->name );
+					add_comment_meta($comment_id, 'orcid-name', $api->name );
 				} else {
 					//fallback is to set the name to an empty string and replace with the number
 					//at output time
-					add_comment_meta($comment_id, 'orcid_name', '');
+					add_comment_meta($comment_id, 'orcid-name', '');
 				}
 			}
 		}
@@ -285,7 +285,7 @@ class wpORCID {
 		// get author's ORCID
 		if ( $field->orcid ) {
 			// allow HTML override
-			return $$field->html.$content;
+			return $field->html.$content;
 		} else {
 			return $content;
 		}
@@ -325,7 +325,7 @@ class OrcidAPI {
 	 */
 	function remote_call($url) {
 		if ( function_exists('wp_remote_get') ) {
-			return wp_remote_get($url);
+			return wp_remote_retrieve_body( wp_remote_get($url) );
 		} else {
 			try {
 				$file = file_get_contents($url);
@@ -364,7 +364,7 @@ class OrcidField {
 			
 			//find metadata for the post author
 			$this->orcid = get_the_author_meta('orcid');
-			$this->orcid_name = get_the_author_meta('orcid_name');		
+			$this->orcid_name = get_the_author_meta('orcid-name');		
 			//set orcid_name to an empty sting if we couldn't find it
 			if ( !$this->orcid_name ) $this->orcid_name = '';
 		
