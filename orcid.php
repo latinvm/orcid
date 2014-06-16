@@ -94,6 +94,8 @@ class wpORCID {
 		register_setting('orcid_settings_group', 'add-orcid-to-comments');
 		register_setting('orcid_settings_group', 'use-orcid-shortcode');
 		register_setting('orcid_settings_group', 'orcid-shortcode');
+		register_setting('orcid_settings_group', 'orcid-display');
+		register_setting('orcid_settings_group', 'orcid-approve-comments');
 	}
 	
 	function orcid_settings_form() {
@@ -118,7 +120,20 @@ class wpORCID {
 						<td></td>
 					</tr>
 					
+					<tr>
+						<td>Display</td>
+						<td><?php radio('orcid-display', 'numbers', 'Numbers', 'numbers'); ?><br />
+						<?php radio('orcid-display', 'names', 'Names'); ?></td>
+						<td></td>
+					</tr>
 					
+					<tr>	
+						<td>ORCID validation</td>
+						<td>
+							<?php checkbox('orcid-approve-comments', 'Automatically approve comments with valid ORCIDs'); ?>
+						</td>
+						<td></td>
+					</tr>
 					
 					
 					
@@ -376,5 +391,14 @@ function checkbox($name, $label, $default = FALSE) {
 	}
 	echo '<label for="'.$name.'">'.$label.'</label>';
 } 
+
+function radio($name, $value, $label, $default = FALSE) {
+	if ( get_option($name, $default) == $value ) $checked = 'checked="checked"';
+	else $checked = '';
+	echo sprintf(
+		'<input type="radio" name="%s" value="%s" %s /><label for=%s>%s</label>', 
+		$name, $value, $checked, $value, $label
+	);
+}
 
 ?>
