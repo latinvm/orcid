@@ -112,12 +112,15 @@ class wpORCID {
 							<?php checkbox('use-orcid-shortcode', 'Shortcode'); ?>
 							[<input type="text" name="orcid-shortcode"
 							value="<?php echo get_option('orcid-shortcode', 'ORCID'); ?>"
-							/ >]	
+							/ >]<br />
+							Note: You can insert ORCIDs into templates directly using <b>the_orcid_author()</b> and <b>the_orcid_comment_author()</b>
 						</td>								
 						<td></td>
 					</tr>
 					
-					<tr>Note: You can insert ORCIDs into templates directly using <b>the_orcid_author()</b> and <b>the_orcid_comment_author()</b></tr>
+					
+					
+					
 					
 					<tr>
 						<td></td>
