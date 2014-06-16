@@ -184,6 +184,18 @@ class wpORCID {
 			$orcid = $this->strip_orcid_url($orcid);
 			if ( $this->validate_orcid($orcid) ) {
 				add_comment_meta($comment_id,'orcid',$orcid);
+				$api = new OrcidAPI($orcid);
+				if ( $api->connection && get_option('orcid-approve-comments') ) {
+					add_comment_meta($comment_id, 'orcid_name', $api->name );
+					//approve the comment if the ORCID profile was found and that option is set
+					wp_set_comment_status($comment_id, 'approve');
+				} elseif ( $api->connection ) {
+					add_comment_meta($comment_id, 'orcid_name', $api->name );
+				} else {
+					//fallback is to set the name to an empty string and replace with the number
+					//at output time
+					add_comment_meta($comment_id, 'orcid_name', '');
+				}
 			}
 		}
 	}
@@ -224,33 +236,37 @@ class wpORCID {
 	/* update orcid metadata for user */
 	public function update_user_profile_orcid(){
 		global $user_ID;
-		update_user_meta($user_ID,'orcid',$_POST['orcid']);    
+		$orcid = $_POST['orcid'];
+		update_user_meta( $user_ID, 'orcid', $orcid );
+		$api = new OrcidAPI($orcid);
+		if ( $api->connection ) {
+			update_user_meta( $user_ID, 'orcid-name', $api->name );
+		}    
 	}
 
 	/* update orcid metadata from admin pages */
 	public function admin_user_profile_orcid($user_id){
-		update_user_meta($user_id,'orcid',$_POST['orcid']);    
+		$orcid = $_POST['orcid'];
+		update_user_meta( $user_id, 'orcid', $orcid );
+		$api = new OrcidAPI($orcid);
+		if ( $api->connection ) {
+			update_user_meta( $user_id, 'orcid-name', $api->name );
+		}  
 	}
 	
-	/* add ORCID link to default to comment text, comment this function if you want to modify your templates and manually add the ORCID using get_the_comment_orcid() */
+	/* add ORCID link to default to comment text */
+	/* This function will only execute if add-orcid-to-comments is set to 'on' */
 	public function comment_orcid_text($text){
-		// get the comment's ORCID
-		$orcid = $this->get_the_comment_orcid();
 		
-		if (!$orcid){
-			// get user's metadata if an existing user
-			$orcid = get_user_meta($this->orcid_get_comment_author_id(get_comment_ID()),'orcid',true);
-		}
+		$field = new OrcidField('comment');
 		
-		if ($orcid){
-			// allow HTML override
-			$html = $this->get_orcid_html($orcid);
-			
-			return $html.$text;
- 
+		if ($field->orcid) {
+			//allow HTML override
+			return $field->html.$text;
 		} else {
 			return $text;
 		}
+
 	}
 	
 	/* add orcid to top of post content, comment out this function if you want to use get_the_author_orcid() to manually add the ORCID to the post template */
@@ -264,49 +280,22 @@ class wpORCID {
 			//all other post types
 			return $content;
 		}
-		
+
+		$field = new OrcidField('author');		
 		// get author's ORCID
-		if ( $orcid = $this->get_the_author_orcid() ) {
+		if ( $field->orcid ) {
 			// allow HTML override
-			$html = $this->get_orcid_html($orcid);
-			return $html.$content;
+			return $$field->html.$content;
 		} else {
 			return $content;
 		}
 	}
 	
-	/* get comment author ID because WP's function returns display name */
-	function orcid_get_comment_author_id($comment_id){
-		$comment = get_comment($comment_id);
-
-		if ($comment->user_id && $user = get_userdata($comment->user_id)) {
-			return $user->ID;
-		} else {
-			return false;
-		}
-	}
-
-	/* returns the comments orcid */
-	public function get_the_comment_orcid(){
-		$orcid = get_comment_meta(get_comment_ID(),'orcid',true);
-		return $orcid;
-	}
-	
-	/* returns the authors orcid */
-	public function get_the_author_orcid(){
-		$orcid = get_the_author_meta('orcid');
-		return $orcid;
-	}
-	
 	/* use the shortcode [ORCID] to display the authors ORCID in a post */
 	public function shortcode(){	
-		$orcid = get_the_author_meta('orcid');
-		return $this->get_orcid_html($orcid);
+		$field = new OrcidField('author');
+		return $field->html;
     }
-    
-    public function get_orcid_html($orcid) {
-		return sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $orcid, $orcid);
-	}
 }
 
 class OrcidAPI {
@@ -349,37 +338,79 @@ class OrcidAPI {
 	}
 }
 
+/*Output functions*/
 
+class OrcidField {
+	public $type, $orcid, $orcid_name, $html;
+
+	function __construct($type) {
+		$this->type = $type;
+		//set orcid info for comments	
+		if ( $type == 'comment' ) {
+			// get the comment's ORCID		
+			$this->orcid = get_comment_meta(get_comment_ID(),'orcid',true);
+			$this->orcid_name = get_comment_meta(get_comment_ID(),'orcid-name',true);
+			
+			if (!$this->orcid){
+				// get user's metadata if an existing user
+				$this->orcid = get_user_meta($this->get_comment_author_id(get_comment_ID()),'orcid',true);
+				$this->orcid_name = get_user_meta($this->get_comment_author_id(get_comment_ID()),'orcid-name',true);
+			}
+			
+			//set orcid_name to an empty string if we couldn't find it
+			if (!$this->orcid_name) $this->orcid_name = '';
+			
+		} elseif ( $type == 'author' ) {
+			
+			//find metadata for the post author
+			$this->orcid = get_the_author_meta('orcid');
+			$this->orcid_name = get_the_author_meta('orcid_name');		
+			//set orcid_name to an empty sting if we couldn't find it
+			if ( !$this->orcid_name ) $this->orcid_name = '';
+		
+		} else throw new Exception('Invalid OrcidField type supplied');
+		
+		//set the HTML output for the object
+		$this->html = $this->get_orcid_html();
+	
+	}
+	
+	/* get comment author ID because WP's function returns display name */
+	function get_comment_author_id($comment_id){
+		$comment = get_comment($comment_id);
+
+		if ($comment->user_id && $user = get_userdata($comment->user_id)) {
+			return $user->ID;
+		} else {
+			return false;
+		}
+	}
+    
+    public function get_orcid_html() {
+		if ( get_option('orcid-display') == 'names' && $this->orcid_name != '' ) {
+			return sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $this->orcid, $this->orcid_name);
+		} else {
+			return sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $this->orcid, $this->orcid);
+		}
+	}
+}
 
 $wpORCID = new wpORCID();
 
-/* returns the comments orcid for use in custom templates simply use <?php orcid_comment(); ?> in a comment template to display the comments ORCID */
+/* returns the comments orcid for use in custom templates simply use <?php the_orcid_comment_author(); ?> in a comment template to display the comments ORCID */
 function the_orcid_comment_author(){
-	global $wpORCID;
+
+	$field = new OrcidField('comment');
+	echo $field->html;
 	
-	$orcid = $wpORCID->get_the_comment_orcid();
-	if (!$orcid){
-		// get user's metadata if an existing user
-		$orcid = get_user_meta($wpORCID->orcid_get_comment_author_id(get_comment_ID()),'orcid',true);
-	}
-	
-	if ($orcid){
-		echo $wpORCID->get_orcid_html($orcid);
-	} else {
-		echo '';
-	}
 }
 
 /* returns the authors orcid for use in custom templates simply use <?php orcid_author(); ?> in a content tempate to display the authors ORCID */
 function the_orcid_author(){
-	global $wpORCID;
 	
-	$orcid = $wpORCID->get_the_author_orcid();
-	if ($orcid){
-		echo $wpORCID->get_orcid_html($orcid);
-	} else {
-		echo '';
-	}
+	$field = new OrcidField('author');
+	echo $field->html;
+	
 }
 
 function checkbox($name, $label, $default = FALSE) {
