@@ -97,42 +97,40 @@ class wpORCID {
 	}
 	
 	function orcid_settings_form() {
-		if ( $_SERVER['REQUEST_METHOD'] === 'POST') {
-			check_admin_referer( 'orcid_nonce' );
-		} else {
-			?>
-				<div class = "wrap">
-					<h2>ORCID for Wordpress Settings</h2>
-					<form method = "POST" action="options.php" id="orcid-settings">
-						<?php settings_fields('orcid_settings_group'); ?>
-						<table class="form-table">
-							<tr>
-								<td>Automatically add ORCID to</td>
-								<td>
-									<?php checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
-									<?php checkbox('add-orcid-to-pages', 'Pages'); ?><br />
-									<?php checkbox('add-orcid-to-comments', 'Comments', 'on'); ?><br />
-									<?php checkbox('use-orcid-shortcode', 'Shortcode'); ?>
-									[<input type="text" name="orcid-shortcode"
-									value="<?php echo get_option('orcid-shortcode', 'ORCID'); ?>"
-									/ >]	
-								</td>								
-								<td></td>
-							</tr>
-							
-							<tr>Note: You can insert ORCIDs into templates directly using <b>the_orcid_author()</b> and <b>the_orcid_comment_author()</b></tr>
-							
-							
-							<tr>
-								<td></td>
-								<td><input type="submit" name="submit" value="Save changes" class="button-primary" /></td>
-								<td></td>
-							</tr>
-						</table>
-					</form>
-				</div>		
-			<?php
-		}
+		$f = new OrcidFormFields();
+		?>
+		
+		<div class = "wrap">
+			<h2>ORCID for Wordpress Settings</h2>
+			<form method = "POST" action="options.php" id="orcid-settings">
+				<?php settings_fields('orcid_settings_group'); ?>
+				<table class="form-table">
+					<tr>
+						<td>Automatically add ORCID to</td>
+						<td>
+							<?php $f->checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
+							<?php $f->checkbox('add-orcid-to-pages', 'Pages'); ?><br />
+							<?php $f->checkbox('add-orcid-to-comments', 'Comments', 'on'); ?><br />
+							<?php $f->checkbox('use-orcid-shortcode', 'Shortcode'); ?>
+							[<input type="text" name="orcid-shortcode"
+							value="<?php echo get_option('orcid-shortcode', 'ORCID'); ?>"
+							/ >]	
+						</td>								
+						<td></td>
+					</tr>
+					
+					<tr>Note: You can insert ORCIDs into templates directly using <b>the_orcid_author()</b> and <b>the_orcid_comment_author()</b></tr>
+					
+					
+					<tr>
+						<td></td>
+						<td><input type="submit" name="submit" value="Save changes" class="button-primary" /></td>
+						<td></td>
+					</tr>
+				</table>
+			</form>
+		</div>		
+		<?php
 	}
 	
 	
@@ -327,14 +325,17 @@ function the_orcid_author(){
 	}
 }
 
-function checkbox($name, $label, $default = FALSE) {
-	echo '<input type="checkbox" name="'.$name.'" ';
-	if ( get_option($name, $default) == 'on' ) {
-		echo 'checked="checked" />'; 
-	} else {
-		echo '/>';
-	}
-	echo '<label for="'.$name.'">'.$label.'</label>';
-} 
+class OrcidFormFields {
+	public function checkbox($name, $label, $default = FALSE) {
+		echo '<input type="checkbox" name="'.$name.'" ';
+		if ( get_option($name, $default) == 'on' ) {
+			echo 'checked="checked" />'; 
+		} else {
+			echo '/>';
+		}
+		echo '<label for="'.$name.'">'.$label.'</label>';
+	} 	
+}
+
 
 ?>
