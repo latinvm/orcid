@@ -309,8 +309,11 @@ class wpORCID {
     }
     
     public function get_orcid_html($orcid) {
-		$html = sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $orcid, $orcid);
-		return apply_filters('orcid_html_override', $html, $orcid);
+		return sprintf(
+			apply_filters('orcid_field_html','<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
+				$orcid,
+				$orcid
+			);
 	}
 }
 
