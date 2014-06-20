@@ -1,7 +1,7 @@
 ORCID WordPress Plugin
 =====
 
-This is a WordPress plugin that displays ORCIDs in comments and posts.
+This is a WordPress plugin that displays ORCIDs in comments and posts. The ORCID for post authors can be entered as a user option, and the ORCID for commentors is optionally entered in the Wordpress comments form.
 
 TODO:
 
