@@ -96,9 +96,12 @@ class wpORCID {
 		register_setting('orcid_settings_group', 'orcid-shortcode');
 		register_setting('orcid_settings_group', 'orcid-display');
 		register_setting('orcid_settings_group', 'orcid-approve-comments');
+		register_setting('orcid_settings_group', 'orcid-html-position');
+		register_setting('orcid_settings_group', 'orcid-html-comments-position');
 	}
 	
 	function orcid_settings_form() {
+		$f = new OrcidFormFields();
 		?>
 		<div class = "wrap">
 			<h2>ORCID for Wordpress Settings</h2>
@@ -108,10 +111,10 @@ class wpORCID {
 					<tr>
 						<td>Automatically add ORCID to</td>
 						<td>
-							<?php checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
-							<?php checkbox('add-orcid-to-pages', 'Pages'); ?><br />
-							<?php checkbox('add-orcid-to-comments', 'Comments', 'on'); ?><br />
-							<?php checkbox('use-orcid-shortcode', 'Shortcode'); ?>
+							<?php $f->checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
+							<?php $f->checkbox('add-orcid-to-pages', 'Pages'); ?><br />
+							<?php $f->checkbox('add-orcid-to-comments', 'Comments', 'on'); ?><br />
+							<?php $f->checkbox('use-orcid-shortcode', 'Shortcode'); ?>
 							[<input type="text" name="orcid-shortcode"
 							value="<?php echo get_option('orcid-shortcode', 'ORCID'); ?>"
 							/ >]<br />
@@ -121,21 +124,25 @@ class wpORCID {
 					</tr>
 					
 					<tr>
-						<td>Display</td>
-						<td><?php radio('orcid-display', 'numbers', 'Numbers', 'numbers'); ?><br />
-						<?php radio('orcid-display', 'names', 'Names'); ?></td>
-						<td></td>
+						<td>ORCID position and display text</td>
+						<td>
+							<?php $f->radio('orcid-html-position', 'top', 'Top of posts', 'top'); ?><br />
+							<?php $f->radio('orcid-html-position', 'bottom', 'Bottom of posts'); ?><br /><br />
+							<?php $f->radio('orcid-html-comments-position', 'top', 'Top of comments', 'top'); ?><br />
+							<?php $f->radio('orcid-html-comments-position', 'bottom', 'Bottom of comments'); ?><br /><br />
+							<?php $f->radio('orcid-display', 'numbers', 'Show ORCID numbers', 'numbers'); ?><br />
+							<?php $f->radio('orcid-display', 'names', 'Show author\'s name'); ?>
+						</td>
+						
 					</tr>
 					
 					<tr>	
-						<td>ORCID validation</td>
+						<td>Comment validation</td>
 						<td>
-							<?php checkbox('orcid-approve-comments', 'Automatically approve comments with valid ORCIDs'); ?>
+							<?php $f->checkbox('orcid-approve-comments', 'Automatically approve comments with valid ORCIDs'); ?>
 						</td>
 						<td></td>
 					</tr>
-					
-					
 					
 					<tr>
 						<td></td>
@@ -260,13 +267,15 @@ class wpORCID {
 		
 		$field = new OrcidField('comment');
 		
-		if ($field->orcid) {
-			//allow HTML override
-			return $field->html.$text;
-		} else {
+		//make sure we have an ORCID, if not just return the input
+		if ( !$field->orcid ) {
 			return $text;
 		}
-
+		
+		//output HTML based on the set position
+		if ( get_option('orcid-html-comments-position', 'bottom') == 'bottom' ) return $text.$field->html; 
+		else return $field->html.$text;
+		
 	}
 	
 	/* add orcid to top of post content, comment out this function if you want to use get_the_author_orcid() to manually add the ORCID to the post template */
@@ -280,15 +289,18 @@ class wpORCID {
 			//all other post types
 			return $content;
 		}
-
-		$field = new OrcidField('author');		
-		// get author's ORCID
-		if ( $field->orcid ) {
-			// allow HTML override
-			return $field->html.$content;
-		} else {
+		
+		$field = new OrcidField('author');
+		
+		// get author's ORCID (make sure we have an ORCID set)
+		if ( !$field->orcid ) {
 			return $content;
 		}
+		
+		//output HTML based on the set position
+		if ( get_option('orcid-html-position', 'bottom') == 'bottom' ) return $content.$field->html; 
+		else return $field->html.$content;
+
 	}
 	
 	/* use the shortcode [ORCID] to display the authors ORCID in a post */
@@ -386,11 +398,20 @@ class OrcidField {
 		}
 	}
     
+
     public function get_orcid_html() {
 		if ( get_option('orcid-display') == 'names' && $this->orcid_name != '' ) {
-			return sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $this->orcid, $this->orcid_name);
+			return sprintf(
+				apply_filters('orcid_field_html','<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
+				$this->orcid,
+				$this->orcid_name
+			);
 		} else {
-			return sprintf('<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>', $this->orcid, $this->orcid);
+			return sprintf(
+				apply_filters('orcid_field_html','<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
+				$this->orcid,
+				$this->orcid
+			);
 		}
 	}
 }
@@ -413,15 +434,27 @@ function the_orcid_author(){
 	
 }
 
-function checkbox($name, $label, $default = FALSE) {
-	echo '<input type="checkbox" name="'.$name.'" ';
-	if ( get_option($name, $default) == 'on' ) {
-		echo 'checked="checked" />'; 
-	} else {
-		echo '/>';
+class OrcidFormFields {
+	public function checkbox($name, $label, $default = FALSE) {
+		echo '<input type="checkbox" name="'.$name.'" ';
+		if ( get_option($name, $default) == 'on' ) {
+			echo 'checked="checked" />'; 
+		} else {
+			echo '/>';
+		}
+		echo '<label for="'.$name.'">'.$label.'</label>';
+	} 
+	
+	function radio($name, $value, $label, $default = FALSE) {
+		if ( get_option($name, $default) == $value ) $checked = 'checked="checked"';
+		else $checked = '';
+		echo sprintf(
+			'<input type="radio" name="%s" value="%s" %s /><label for=%s>%s</label>', 
+			$name, $value, $checked, $value, $label
+		);
 	}
-	echo '<label for="'.$name.'">'.$label.'</label>';
-} 
+}
+
 
 function radio($name, $value, $label, $default = FALSE) {
 	if ( get_option($name, $default) == $value ) $checked = 'checked="checked"';
