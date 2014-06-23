@@ -249,8 +249,8 @@ class wpORCID {
 		}
 		
 		//output HTML based on the set position
-		if ( get_option('orcid-html-comment-position', 'bottom') == 'bottom' ) return $text.$html; 
-		else return $text.$html;
+		if ( get_option('orcid-html-comments-position', 'bottom') == 'bottom' ) return $text.$html; 
+		else return $html.$text;
 		
 	}
 	
