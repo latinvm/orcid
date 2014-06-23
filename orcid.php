@@ -249,7 +249,7 @@ class wpORCID {
 		}
 		
 		//output HTML based on the set position
-		if ( get_option('orcid-html-comments-position', 'bottom') == 'bottom' ) return $text.$html; 
+		if ( get_option('orcid-html-comments-position', 'top') == 'bottom' ) return $text.$html; 
 		else return $html.$text;
 		
 	}
@@ -274,7 +274,7 @@ class wpORCID {
 		}
 		
 		//output HTML based on the set position
-		if ( get_option('orcid-html-position', 'bottom') == 'bottom' ) return $content.$html; 
+		if ( get_option('orcid-html-position', 'top') == 'bottom' ) return $content.$html; 
 		else return $html.$content;
 
 	}
