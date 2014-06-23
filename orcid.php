@@ -24,6 +24,7 @@ Author URI: http://www.elsevier.com
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+
 class wpORCID {
 	/* not used for now, might be useful later */
 	protected $pluginPath;
@@ -33,28 +34,37 @@ class wpORCID {
 		$this->assets_path = plugins_url('assets/', __FILE__);
 		
 		/* hook actions / filters onto WP functions */
+		//js and css
 		add_action('wp_enqueue_scripts',array($this,'add_orcid_assets'));
 		add_action('admin_enqueue_scripts', array($this, 'add_orcid_assets'));
 		
-		add_filter('comment_form_default_fields',array($this,'comment_form_custom_fields'));
+		if ( get_option('add-orcid-to-comments', 'on') == 'on' ) {
+			//add to comments fields
+			add_filter('comment_form_default_fields',array($this,'comment_form_custom_fields'));
+			add_action('comment_post',array($this,'save_comment_metadata'));	
+			//add to coment output
+			add_filter('comment_text',array($this,'comment_orcid_text'));
+		}
 		
-		add_action('comment_post',array($this,'save_comment_metadata'));
-		
+		//user profile hooks
 		add_action('user_new_form',array($this,'show_user_profile_orcid'));
 		add_action('edit_user_profile',array($this,'show_user_profile_orcid'));
 		add_action('show_user_profile',array($this,'show_user_profile_orcid'));
-		
 		add_action('personal_options_update',array($this,'update_user_profile_orcid'));
-		
 		add_action('edit_user_profile_update',array($this,'admin_user_profile_orcid'));
 		add_action('user_register',array($this,'admin_user_profile_orcid'));
 		
-		add_filter('comment_text',array($this,'comment_orcid_text'));
+		//add options page to settings menu
+		add_action('admin_menu', array($this, 'orcid_settings_menu'));
+		
+		//output
 		
 		add_filter('the_content',array($this,'the_content_orcid'));
 		
-		/* add a shortcode [ORCID] to be used in templates */
-		add_shortcode('ORCID',array($this,'shortcode'));
+		if ( get_option('use-orcid-shortcode') ) {
+			/* add a shortcode [ORCID] to be used in templates */
+			add_shortcode( get_option('orcid-shortcode'), array($this,'shortcode') );
+		}
 		
 		/* add shortcode support for widgets */
 		add_filter('widget_text', 'do_shortcode');
@@ -63,11 +73,79 @@ class wpORCID {
 	/* add the default plugin stylesheet */
 	public function add_orcid_assets() {
 		wp_enqueue_style( 'prefix-style', plugins_url('assets/orcid.css', __FILE__) );
+		//MUST be queued such and jQuery loads first
 		wp_enqueue_script( 'orcid-javascript', 
 			plugins_url('assets/orcid.js', __FILE__),
 			array( 'jquery' ) 
 		);
 	}
+	
+	/*Add the ORCID settings menu*/
+	function orcid_settings_menu() {
+		add_options_page('ORCID for Wordpress', 'ORCID for Wordpress', 
+		'activate_plugins', 'orcid-settings', array($this, 'orcid_settings_form'));
+		add_action( 'admin_init', array($this, 'orcid_register_settings') );
+		
+	}
+	
+	function orcid_register_settings() {
+		register_setting('orcid_settings_group', 'add-orcid-to-posts');
+		register_setting('orcid_settings_group', 'add-orcid-to-pages');
+		register_setting('orcid_settings_group', 'add-orcid-to-comments');
+		register_setting('orcid_settings_group', 'use-orcid-shortcode');
+		register_setting('orcid_settings_group', 'orcid-shortcode');
+		register_setting('orcid_settings_group', 'orcid-html-position');
+		register_setting('orcid_settings_group', 'orcid-html-comments-position');
+	}
+	
+	function orcid_settings_form() {
+		$f = new OrcidFormFields();
+		?>
+		
+		<div class = "wrap">
+			<h2>ORCID for Wordpress Settings</h2>
+			<form method = "POST" action="options.php" id="orcid-settings">
+				<?php settings_fields('orcid_settings_group'); ?>
+				<table class="form-table">
+					<tr>
+						<td>Automatically add ORCID to</td>
+						<td>
+							<?php $f->checkbox('add-orcid-to-posts', 'Posts', 'on'); ?><br />
+							<?php $f->checkbox('add-orcid-to-pages', 'Pages'); ?><br />
+							<?php $f->checkbox('add-orcid-to-comments', 'Comments', 'on'); ?><br />
+							<?php $f->checkbox('use-orcid-shortcode', 'Shortcode'); ?>
+							[<input type="text" name="orcid-shortcode"
+							value="<?php echo get_option('orcid-shortcode', 'ORCID'); ?>"
+							/ >]	
+						</td>								
+						<td></td>
+					</tr>
+					
+					<tr>Note: You can insert ORCIDs into templates directly using <b>the_orcid_author()</b> and <b>the_orcid_comment_author()</b></tr>
+					
+					
+					<tr>
+						<td>ORCID position</td>
+						<td>
+							<?php $f->radio('orcid-html-position', 'top', 'Top of posts', 'top'); ?><br />
+							<?php $f->radio('orcid-html-position', 'bottom', 'Bottom of posts'); ?><br /><br />
+							<?php $f->radio('orcid-html-comments-position', 'top', 'Top of comments', 'top'); ?><br />
+							<?php $f->radio('orcid-html-comments-position', 'bottom', 'Bottom of comments'); ?>
+						</td>
+						
+					</tr>
+					
+					<tr>
+						<td></td>
+						<td><input type="submit" name="submit" value="Save changes" class="button-primary" /></td>
+						<td></td>
+					</tr>
+				</table>
+			</form>
+		</div>		
+		<?php
+	}
+	
 	
 	/* override default comment fields */
 	public function comment_form_custom_fields($fields) {
@@ -162,50 +240,43 @@ class wpORCID {
 			$orcid = get_user_meta($this->orcid_get_comment_author_id(get_comment_ID()),'orcid',true);
 		}
 		
+		//make sure we have an ORCID, if not just return the input
 		if ($orcid){
 			// allow HTML override
-			$html = sprintf(
-				apply_filters('orcid_comment_text_html','<div class="wp_orcid_comment"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
-				$orcid,
-				$orcid
-			);
-			
-			// allow position to be altered
-			$html_position = apply_filters('orcid_comment_text_html_position','top');
-			if ('top' == $html_position){
-				return $html.$text;
-			} else {
-				return $text.$html;
-			}
- 
+			$html = $this->get_orcid_html($orcid);
 		} else {
 			return $text;
 		}
+		
+		//output HTML based on the set position
+		if ( get_option('orcid-html-comment-position', 'bottom') == 'bottom' ) return $text.$html; 
+		else return $text.$html;
+		
 	}
 	
 	/* add orcid to top of post content, comment out this function if you want to use get_the_author_orcid() to manually add the ORCID to the post template */
 	function the_content_orcid($content){
-		// get author's ORCID
-		$orcid = $this->get_the_author_orcid();
+		//check if ORCID HTML goes on this post type
+		if ( get_post_type() == 'post' ) {
+			if ( !get_option( 'add-orcid-to-posts', 'on' ) ) return $content; 
+		} elseif ( get_post_type() == 'page' ) {
+			if ( !get_option( 'add-orcid-to-pages') ) return $content;
+		} else {
+			//all other post types
+			return $content;
+		}
 		
-		if ($orcid){
-			// allow HTML override
-			$html = sprintf(
-				apply_filters('orcid_the_content_html','<div class="wp_orcid_post"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
-				$orcid,
-				$orcid
-			);
-			
-			// allow position to be altered
-			$html_position = apply_filters('orcid_the_content_html_position','top');
-			if ($html_position == 'top') {
-				return $html.$content;
-			} else {
-				return $content.$html;
-			}
+		// get author's ORCID (make sure we have an ORCID set)
+		if ( $orcid = $this->get_the_author_orcid() ) {
+			$html = $this->get_orcid_html($orcid);
 		} else {
 			return $content;
 		}
+		
+		//output HTML based on the set position
+		if ( get_option('orcid-html-position', 'bottom') == 'bottom' ) return $content.$html; 
+		else return $html.$content;
+
 	}
 	
 	/* get comment author ID because WP's function returns display name */
@@ -232,17 +303,24 @@ class wpORCID {
 	}
 	
 	/* use the shortcode [ORCID] to display the authors ORCID in a post */
-	public function shortcode(){
+	public function shortcode(){	
 		$orcid = get_the_author_meta('orcid');
-		
-		return $orcid;
+		return $this->get_orcid_html($orcid);
     }
+    
+    public function get_orcid_html($orcid) {
+		return sprintf(
+			apply_filters('orcid_field_html','<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>'),
+				$orcid,
+				$orcid
+			);
+	}
 }
 
 $wpORCID = new wpORCID();
 
 /* returns the comments orcid for use in custom templates simply use <?php orcid_comment(); ?> in a comment template to display the comments ORCID */
-function orcid_comment(){
+function the_orcid_comment_author(){
 	global $wpORCID;
 	
 	$orcid = $wpORCID->get_the_comment_orcid();
@@ -252,21 +330,44 @@ function orcid_comment(){
 	}
 	
 	if ($orcid){
-		echo $orcid;
+		echo $wpORCID->get_orcid_html($orcid);
 	} else {
 		echo '';
 	}
 }
 
 /* returns the authors orcid for use in custom templates simply use <?php orcid_author(); ?> in a content tempate to display the authors ORCID */
-function orcid_author(){
+function the_orcid_author(){
 	global $wpORCID;
 	
 	$orcid = $wpORCID->get_the_author_orcid();
 	if ($orcid){
-		echo $orcid;
+		echo $wpORCID->get_orcid_html($orcid);
 	} else {
 		echo '';
 	}
 }
+
+class OrcidFormFields {
+	public function checkbox($name, $label, $default = FALSE) {
+		echo '<input type="checkbox" name="'.$name.'" ';
+		if ( get_option($name, $default) == 'on' ) {
+			echo 'checked="checked" />'; 
+		} else {
+			echo '/>';
+		}
+		echo '<label for="'.$name.'">'.$label.'</label>';
+	} 
+	
+	function radio($name, $value, $label, $default = FALSE) {
+		if ( get_option($name, $default) == $value ) $checked = 'checked="checked"';
+		else $checked = '';
+		echo sprintf(
+			'<input type="radio" name="%s" value="%s" %s /><label for=%s>%s</label>', 
+			$name, $value, $checked, $value, $label
+		);
+	}
+}
+
+
 ?>
