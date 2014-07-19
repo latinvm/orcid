@@ -171,11 +171,12 @@ class wpORCID {
 		$fields['email'] = '<p class="comment-form-email"><label for="email">'.__( 'Email' ).($req ? '<span class="required">*</span>' : '').'</label>'.'<input id="email" name="email" type="text" value="'.esc_attr($commenter['comment_author_email']).'" size="30" '.$aria_req.' /></p>';
 		$fields['url'] = '<p class="comment-form-url"><label for="url">'.__( 'Website' ).'</label><input id="url" name="url" type="text" value="'.esc_attr($commenter['comment_author_url'] ).'" size="30" /></p>';
 		$fields['orcid'] = '<p class="comment-form-orcid"><label for="orcid">ORCID
-			<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" />
-			<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" />
+			<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" class = "orcid-icon" />
+			<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" class = "orcid-icon" />
+			<img src = "'.$this->assets_path.'orcid-waiting.gif" id = "orcid-waiting" class = "orcid-icon" />
 		</label>
 		<input id="orcid" name="orcid" type="text" /><br />
-		<span class="comment-notes">e.g. 0000-0002-7299-680X</span></p>';
+		<span id="orcid-instructions">Add your ORCID here. (e.g. 0000-0002-7299-680X)</span></p>';
 
 		return $fields;
 	}
@@ -235,9 +236,10 @@ class wpORCID {
 	public function show_user_profile_orcid($user) {
 		$orcid = $user->orcid;
 		echo '<table class="form-table"><tr><th><label for="orcid">ORCID</label></th><td><input type="text" id="orcid" name="orcid" class="regular-text" value="'.$orcid.'" />
-		<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" />
-		<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" />		
-		<br /><span class="description">Add your ORCID here. (e.g. 0000-0002-7299-680X)</span></td></tr></table>';
+		<img src = "'.$this->assets_path.'orcid.png'.'" id = "orcid-success" class = "orcid-icon" />
+		<img src = "'.$this->assets_path.'close-icon.png" id = "orcid-failure" class = "orcid-icon" />
+		<img src = "'.$this->assets_path.'orcid-waiting.gif" id = "orcid-waiting" class = "orcid-icon" />	
+		<br /><span id="orcid-instructions">Add your ORCID here. (e.g. 0000-0002-7299-680X)</span></td></tr></table>';
 	}
 
 	/* update orcid metadata for user */
@@ -445,7 +447,7 @@ class OrcidFormFields {
 		echo '<label for="'.$name.'">'.$label.'</label>';
 	} 
 	
-	function radio($name, $value, $label, $default = FALSE) {
+	public function radio($name, $value, $label, $default = FALSE) {
 		if ( get_option($name, $default) == $value ) $checked = 'checked="checked"';
 		else $checked = '';
 		echo sprintf(
@@ -453,16 +455,6 @@ class OrcidFormFields {
 			$name, $value, $checked, $value, $label
 		);
 	}
-}
-
-
-function radio($name, $value, $label, $default = FALSE) {
-	if ( get_option($name, $default) == $value ) $checked = 'checked="checked"';
-	else $checked = '';
-	echo sprintf(
-		'<input type="radio" name="%s" value="%s" %s /><label for=%s>%s</label>', 
-		$name, $value, $checked, $value, $label
-	);
 }
 
 ?>
