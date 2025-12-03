@@ -113,7 +113,7 @@ This plugin is licensed under the GPL v2 or later.
 ## Credits
 
 - Original author: Roy Boverhof (Elsevier)
-- Contributors: Casey A. Ydenberg
+- Contributors: Casey A. Ydenberg, Philip John
 
 ## Links
 
