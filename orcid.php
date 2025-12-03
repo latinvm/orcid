@@ -563,6 +563,21 @@ class WP_ORCID {
 	 * @return string Modified content.
 	 */
 	public function add_orcid_to_content( string $content ): string {
+		// Only run on frontend, not in feeds, admin, or REST API contexts.
+		if ( is_feed() || is_admin() || wp_is_serving_rest_request() ) {
+			return $content;
+		}
+
+		// Only run in the main query to avoid duplication in widgets/sidebars.
+		if ( ! is_main_query() || ! in_the_loop() ) {
+			return $content;
+		}
+
+		// Prevent duplicate insertion (e.g., from FeedWordPress or caching plugins).
+		if ( strpos( $content, 'class="wp_orcid_field"' ) !== false ) {
+			return $content;
+		}
+
 		$post_type = get_post_type();
 
 		if ( 'post' === $post_type && ! get_option( 'add-orcid-to-posts', 'on' ) ) {
