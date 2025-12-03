@@ -1,24 +1,93 @@
+/**
+ * ORCID Plugin Styles
+ *
+ * @package ORCID
+ * @since 1.0.0
+ */
+
+/* ORCID field display in posts/comments */
 .wp_orcid_field {
 	background-image: url('orcid.png');
 	background-repeat: no-repeat;
-	background-position: 0 3px;
-	padding-left: 14px;
-	font-size: 0.75em;
-	padding-bottom: 5px;
+	background-position: 0 center;
+	background-size: 12px 12px;
+	padding-left: 16px;
+	font-size: 0.875em;
+	padding-bottom: 0.5em;
+	margin-bottom: 0.5em;
 }
 
+.wp_orcid_field a {
+	text-decoration: none;
+}
+
+.wp_orcid_field a:hover,
+.wp_orcid_field a:focus {
+	text-decoration: underline;
+}
+
+/* Validation icons */
 .orcid-icon {
 	display: none;
+	width: 16px;
+	height: 16px;
+	vertical-align: middle;
+	margin-left: 4px;
 }
 
+/* Instruction text */
 #orcid-instructions {
 	font-style: italic;
-	font-size: 0.9em;
+	font-size: 0.875em;
+	color: #666;
+	display: block;
+	margin-top: 4px;
 }
 
-.form-table td:first-child {
+/* Comment form ORCID field */
+.comment-form-orcid {
+	margin-bottom: 1em;
+}
+
+.comment-form-orcid label {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 4px;
+}
+
+.comment-form-orcid input[type="text"] {
+	width: 100%;
+	max-width: 300px;
+}
+
+/* Admin settings page */
+.orcid-settings .form-table td:first-child {
 	text-align: right;
 	vertical-align: top;
-	font-weight: bold;
+	font-weight: 600;
 }
 
+/* User profile ORCID field */
+.form-table .orcid-icon {
+	margin-left: 8px;
+}
+
+/* Accessibility: ensure icons have sufficient contrast */
+@media (prefers-reduced-motion: reduce) {
+	#orcid-waiting {
+		animation: none;
+	}
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+	.wp_orcid_field a {
+		text-decoration: underline;
+	}
+
+	#orcid-instructions {
+		color: inherit;
+	}
+}

@@ -1,68 +1,207 @@
-jQuery(document).ready(function() {
-	var orcid = Orcid();
-	//check ORCID number on form submission
-	jQuery('.comment-form').submit(orcid.validateForm);
-	//bind event handlers to the textbox itself
-	//should work for both comments form and User form in admin panel
-	jQuery('#orcid').blur(orcid.validateId);
-})
+/**
+ * ORCID Validation Script
+ *
+ * Handles client-side ORCID validation using WordPress AJAX.
+ *
+ * @package ORCID
+ * @since 1.0.0
+ */
 
+( function( $ ) {
+	'use strict';
 
-function Orcid() {
-	var $ = jQuery;
-	var that = Object();
-	
-	//validate form
-	that.validateForm = function(e) {
-		return that.validateId();
-	}
-	
-	//validate the ORCID number entered by the user.
-	//First by the sturcture of the input and then by checking in with ORCID API
-	that.validateId = function(e) {
-		var inputString = $('#orcid').val();
-		//this Regex could be improved to check whole string.
-		//Right now just checks for illegal characters
-		var orcidRegex = new RegExp("[^A-Za-z0-9\-\:\/\.]"); 
-		var illegalChar = orcidRegex.test(inputString); 
-		if (!illegalChar) {
-			//valid so far. Now check with ORCID API
-			that.showIcon( $('#orcid-waiting') );  
-			that.checkOrcidAPI(inputString);
-			return true;
-		} else {
-			//not a valid string. Show user the fail icon.
-			that.showIcon( $('#orcid-failure') );
-			$('#orcid-instructions').html('e.g. 0000-0002-7299-680X');
-			return false;
-		}
-	}
-	
-	//method for contacting the ORCID API. On success, shows the success icon and
-	//gives the user their credit name (so they can confirm).
-	//On error (number is not valid or ORCID cannot be contacted) shows the fail icon.
-	that.checkOrcidAPI = function(number) {
-		$.ajax({
-			method: 'get',
-			url: 'http://pub.orcid.org/' + number,
-			dataType: 'xml',
-			success: function(response) {
-				that.showIcon( $('#orcid-success') );
-				//find users name from XML response
-				var name = $(response).find('credit-name')[0].innerHTML;
-				$('#orcid-instructions').html('You are: ' + name);
-			},
-			error: function() {
-				that.showIcon( $('#orcid-failure') );
-				$('#orcid-instructions').html('Your ORCID profile could not be found');
+	/**
+	 * ORCID Validator object.
+	 */
+	const OrcidValidator = {
+		/**
+		 * Initialize the validator.
+		 */
+		init: function() {
+			this.bindEvents();
+		},
+
+		/**
+		 * Bind event handlers.
+		 */
+		bindEvents: function() {
+			const $orcidField = $( '#orcid' );
+
+			if ( ! $orcidField.length ) {
+				return;
 			}
-		})
-	}
-	
-	//Shows an icon (passed in as a jQuery object.) Hides all the other icons.
-	that.showIcon = function(icon) {
-		$('.orcid-icon').hide();
-		$(icon).show();
-	}
-	return that;
-}
+
+			// Validate on blur.
+			$orcidField.on( 'blur', this.handleBlur.bind( this ) );
+
+			// Validate on form submission.
+			$( '.comment-form' ).on( 'submit', this.handleSubmit.bind( this ) );
+
+			// Also handle user profile form.
+			$( '#your-profile, #createuser' ).on( 'submit', this.handleSubmit.bind( this ) );
+		},
+
+		/**
+		 * Handle blur event on ORCID field.
+		 *
+		 * @param {Event} e The blur event.
+		 */
+		handleBlur: function( e ) {
+			const value = $( e.target ).val().trim();
+
+			if ( value === '' ) {
+				this.hideAllIcons();
+				this.setInstructions( orcidData.i18n.example );
+				return;
+			}
+
+			this.validateOrcid( value );
+		},
+
+		/**
+		 * Handle form submission.
+		 *
+		 * @param {Event} e The submit event.
+		 * @return {boolean} Whether to allow form submission.
+		 */
+		handleSubmit: function( e ) {
+			const $orcidField = $( '#orcid' );
+			const value = $orcidField.val().trim();
+
+			// Allow empty ORCID.
+			if ( value === '' ) {
+				return true;
+			}
+
+			// Check if format is valid before submitting.
+			if ( ! this.isValidFormat( value ) ) {
+				e.preventDefault();
+				this.showIcon( 'failure' );
+				this.setInstructions( orcidData.i18n.invalidFormat );
+				return false;
+			}
+
+			return true;
+		},
+
+		/**
+		 * Validate ORCID via AJAX.
+		 *
+		 * @param {string} orcid The ORCID to validate.
+		 */
+		validateOrcid: function( orcid ) {
+			// First check local format validation.
+			if ( ! this.isValidFormat( orcid ) ) {
+				this.showIcon( 'failure' );
+				this.setInstructions( orcidData.i18n.invalidFormat );
+				return;
+			}
+
+			// Show loading indicator.
+			this.showIcon( 'waiting' );
+
+			// Make AJAX request.
+			$.ajax( {
+				url: orcidData.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'validate_orcid',
+					nonce: orcidData.nonce,
+					orcid: this.extractOrcidId( orcid )
+				},
+				success: this.handleValidationSuccess.bind( this ),
+				error: this.handleValidationError.bind( this )
+			} );
+		},
+
+		/**
+		 * Handle successful validation response.
+		 *
+		 * @param {Object} response The AJAX response.
+		 */
+		handleValidationSuccess: function( response ) {
+			if ( response.success && response.data ) {
+				this.showIcon( 'success' );
+				const message = orcidData.i18n.youAre.replace( '%s', response.data.name || response.data.orcid );
+				this.setInstructions( message );
+			} else {
+				this.showIcon( 'failure' );
+				this.setInstructions( response.data?.message || orcidData.i18n.notFound );
+			}
+		},
+
+		/**
+		 * Handle validation error.
+		 */
+		handleValidationError: function() {
+			this.showIcon( 'failure' );
+			this.setInstructions( orcidData.i18n.notFound );
+		},
+
+		/**
+		 * Check if ORCID format is valid.
+		 *
+		 * Accepts formats:
+		 * - 0000-0000-0000-000X
+		 * - https://orcid.org/0000-0000-0000-000X
+		 * - orcid.org/0000-0000-0000-000X
+		 *
+		 * @param {string} input The input to validate.
+		 * @return {boolean} True if format is valid.
+		 */
+		isValidFormat: function( input ) {
+			const orcid = this.extractOrcidId( input );
+			// ORCID format: 0000-0000-0000-000X (where X can be 0-9 or X).
+			const orcidRegex = /^[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$/;
+			return orcidRegex.test( orcid );
+		},
+
+		/**
+		 * Extract ORCID ID from URL or string.
+		 *
+		 * @param {string} input The input string.
+		 * @return {string} The extracted ORCID ID.
+		 */
+		extractOrcidId: function( input ) {
+			const pos = input.indexOf( 'orcid.org/' );
+			if ( pos !== -1 ) {
+				return input.substring( pos + 10 );
+			}
+			return input;
+		},
+
+		/**
+		 * Show a specific icon and hide others.
+		 *
+		 * @param {string} iconType The icon type: 'success', 'failure', or 'waiting'.
+		 */
+		showIcon: function( iconType ) {
+			this.hideAllIcons();
+			$( '#orcid-' + iconType ).show();
+		},
+
+		/**
+		 * Hide all validation icons.
+		 */
+		hideAllIcons: function() {
+			$( '.orcid-icon' ).hide();
+		},
+
+		/**
+		 * Set the instructions text.
+		 *
+		 * @param {string} text The text to display.
+		 */
+		setInstructions: function( text ) {
+			$( '#orcid-instructions' ).text( text );
+		}
+	};
+
+	/**
+	 * Initialize when document is ready.
+	 */
+	$( document ).ready( function() {
+		OrcidValidator.init();
+	} );
+
+} )( jQuery );

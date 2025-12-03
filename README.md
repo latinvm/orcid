@@ -1,29 +1,121 @@
-ORCID WordPress Plugin
-=====
+# ORCID WordPress Plugin
 
-This is a WordPress plugin that displays ORCIDs in comments and posts. The ORCID for post authors can be entered as a user option, and the ORCID for commentors is optionally entered in the Wordpress comments form.
+A WordPress plugin that displays ORCID (Open Researcher and Contributor ID) identifiers in comments and posts.
 
-TODO:
+## Description
 
+This plugin allows WordPress users to add their ORCID to their profile, which can then be displayed on posts and pages. Commenters can also optionally enter their ORCID in the comment form.
 
-- use OAuth to allow social login via orcid.org
-- add ORCID to admin/update comment page
+## Requirements
 
-##Settings##
+- WordPress 5.0 or higher
+- PHP 7.4 or higher
 
-The ORCID Wordpress plugin adds a Settings page and a user option to the Wordpress admin interface. Users can add their ORCID to their profile, and administrators can choose to add these to posts, or pages, at either the top or the bottom of the post. The ORCID number is displayed as text, hyperlinked to the users ORCID profile, along with the ORCID logo.
+## Features
 
-In addition, administators can allow commentors to add their ORCID. 
+- Add ORCID field to user profiles
+- Display author ORCID on posts and pages
+- Optional ORCID field in comment forms
+- Real-time ORCID validation via the ORCID public API
+- Auto-approve comments from verified ORCID holders
+- Customizable display position (top/bottom of content)
+- Display ORCID numbers or author names
+- Shortcode support for flexible placement
+- Template functions for theme integration
+- Internationalization ready
 
-## Notes for theme developers ##
+## Installation
 
-The ORCID HTML output is attached by default to either the top or bottom of `the_content`, or at the top or bottom the the `comment_text`. This can be overridden by turning off the settings for adding ORCID automatically, and placing the `the_orcid_author` or `the_orcid_comment_author` directly in the theme code.
+1. Upload the `orcid` folder to `/wp-content/plugins/`
+2. Activate the plugin through the 'Plugins' menu in WordPress
+3. Configure settings under Settings → ORCID for WordPress
 
-The default HTML produced is `<div class="wp_orcid_field"><a href="http://orcid.org/%s" target="_blank" rel="author">%s</a></div>`, where `%s` in each case represents the ORCID number. This can be overridden by creating a hook called `orcid_field_html` for example:
+## Settings
 
-    add_filter('orcid_field_html', 'my_orcid_field_html');
-    function my_orcid_field_html() {
-    	return '<ul><li>ORCID: %s</li></ul>'
-    }
+The plugin adds a Settings page accessible via Settings → ORCID for WordPress. Available options:
 
- to get something really ugly.
+- **Automatically add ORCID to**: Choose to display ORCIDs on Posts, Pages, and/or Comments
+- **Shortcode support**: Enable the `[ORCID]` shortcode for manual placement
+- **Position**: Display at top or bottom of posts/comments
+- **Display text**: Show ORCID numbers or author names (fetched from ORCID profiles)
+- **Comment validation**: Automatically approve comments with valid ORCIDs
+
+## Usage
+
+### For Users
+
+Add your ORCID to your WordPress profile under Users → Your Profile. The ORCID will be validated against the ORCID public API.
+
+### For Theme Developers
+
+#### Template Functions
+
+Place these functions directly in your theme templates:
+
+```php
+// Display author's ORCID
+<?php the_orcid_author(); ?>
+
+// Display comment author's ORCID
+<?php the_orcid_comment_author(); ?>
+```
+
+#### Shortcode
+
+Use the shortcode in post/page content:
+
+```
+[ORCID]
+```
+
+#### Customizing HTML Output
+
+Filter the HTML output using the `orcid_field_html` filter:
+
+```php
+add_filter( 'orcid_field_html', 'my_custom_orcid_html', 10, 4 );
+function my_custom_orcid_html( $html, $orcid, $display_text, $type ) {
+    return sprintf(
+        '<span class="custom-orcid"><a href="https://orcid.org/%s">%s</a></span>',
+        esc_attr( $orcid ),
+        esc_html( $display_text )
+    );
+}
+```
+
+Parameters:
+- `$html` - The default HTML output
+- `$orcid` - The ORCID ID
+- `$display_text` - The text being displayed (ORCID number or name)
+- `$type` - Context type: 'comment' or 'author'
+
+## Changelog
+
+### 1.0.0
+- Modernized codebase for WordPress 5.0+ and PHP 7.4+
+- Added proper security with nonce verification
+- Updated to use ORCID API v3.0 with HTTPS
+- Added AJAX-based ORCID validation
+- Improved input sanitization and output escaping
+- Added PHP type declarations
+- Added internationalization support
+- Improved accessibility
+- Singleton pattern for main plugin class
+- WordPress Coding Standards compliance
+
+### 0.5
+- Initial public release
+
+## License
+
+This plugin is licensed under the GPL v2 or later.
+
+## Credits
+
+- Original author: Roy Boverhof (Elsevier)
+- Contributors: Casey A. Ydenberg
+
+## Links
+
+- [ORCID](https://orcid.org/)
+- [Plugin Repository](https://github.com/latinvm/orcid)
