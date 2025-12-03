@@ -118,4 +118,4 @@ This plugin is licensed under the GPL v2 or later.
 ## Links
 
 - [ORCID](https://orcid.org/)
-- [Plugin Repository](https://github.com/latinvm/orcid)
+- [Plugin Repository](https://github.com/latinvm/wordpress-orcid)

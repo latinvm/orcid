@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: ORCID
- * Plugin URI: https://github.com/latinvm/orcid
+ * Plugin URI: https://github.com/latinvm/wordpress-orcid
  * Description: This plugin adds a field for ORCID to users posts and comments
  * Version: 1.0.0
  * Author: Roy Boverhof
